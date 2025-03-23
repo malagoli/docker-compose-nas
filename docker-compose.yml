@@ -556,7 +556,29 @@ services:
       - AUTOHEAL_CONTAINER_LABEL=all
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-
+  jeedom:
+    image: jeedom/jeedom:latest
+    container_name: jeedom
+    restart: always
+    volumes:
+      - ./jeedom/db:/var/lib/mysql
+      - ./jeedom/www:/var/www/html
+    privileged: true
+    ports:
+      - 8085:80
+    labels:
+      - homepage.group=Media
+      - homepage.name=jeedom
+      - homepage.icon=jellyfin.png
+      - homepage.href=http://nas.malago.li:8085/
+      - homepage.description=Jeedom
+      - homepage.weight=4
+      - homepage.widget.type=jeedom
+    healthcheck:
+        test: ["CMD", "curl", "-fs", "-S", "--max-time", "2", "http://localhost:80"]
+        interval: 30s
+        timeout: 10s
+        retries: 5
 networks:
   default:
     name: docker-compose-nas
