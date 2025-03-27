@@ -563,13 +563,13 @@ services:
     volumes:
       - ./jeedom/db:/var/lib/mysql
       - ./jeedom/www:/var/www/html
-    privileged: true
-    ports:
-      - 8085:80
+    #privileged: true
+    tmpfs:
+      - /tmp/jeedom      
+    #network_mode: bridge
     labels:
       - homepage.group=Media
       - homepage.name=jeedom
-      - homepage.icon=jellyfin.png
       - homepage.href=http://nas.malago.li:8085/
       - homepage.description=Jeedom
       - homepage.weight=4
@@ -579,6 +579,14 @@ services:
         interval: 30s
         timeout: 10s
         retries: 5
+  jeedom_cloudflare:
+     image: cloudflare/cloudflared:latest
+     restart: always
+     env_file: ".env"
+     command:
+       - "tunnel"
+       - "--no-autoupdate"
+       - "run"
 networks:
   default:
     name: docker-compose-nas
