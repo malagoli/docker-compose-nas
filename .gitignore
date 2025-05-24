@@ -22,4 +22,6 @@ docker-compose.override.yml
 /calibre-web
 /cleanuperr/*
 !/cleanuperr/blacklist.json
+/cleanuperr/*
+!/cleanuperr/blacklist.json
 /jeedom
