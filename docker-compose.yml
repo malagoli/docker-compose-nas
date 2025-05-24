@@ -37,7 +37,7 @@ services:
       - host.docker.internal:172.17.0.1
     healthcheck:
       test: ["CMD", "traefik", "healthcheck", "--ping"]
-      interval: 30s
+      interval: 1m
       retries: 10
   sonarr:
     image: lscr.io/linuxserver/sonarr
@@ -52,7 +52,7 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://127.0.0.1:8989/sonarr/ping"]
-      interval: 30s
+      interval: 1m
       retries: 10
     labels:
       - traefik.enable=true
@@ -82,7 +82,7 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://127.0.0.1:7878/radarr/ping"]
-      interval: 30s
+      interval: 1m
       retries: 10
     labels:
       - traefik.enable=true
@@ -112,7 +112,7 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://127.0.0.1:8686/lidarr/ping"]
-      interval: 30s
+      interval: 1m
       retries: 10
     labels:
       - traefik.enable=true
@@ -144,7 +144,7 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://127.0.0.1:6767/bazarr/ping"]
-      interval: 5s
+      interval: 1m
       retries: 10
     labels:
       - traefik.enable=true
@@ -179,7 +179,7 @@ services:
           "-qO",
           "/dev/null",
         ]
-      interval: 30s
+      interval: 1m
       retries: 10
     labels:
       - traefik.enable=true
@@ -208,7 +208,7 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://127.0.0.1:9696/prowlarr/ping"]
-      interval: 30s
+      interval: 1m
       retries: 10
     labels:
       - traefik.enable=true
@@ -259,7 +259,7 @@ services:
       # see: https://github.com/qdm12/gluetun/issues/641#issuecomment-933856220
       test:
         ["CMD", "curl", "--fail", "http://127.0.0.1:8080", "https://google.com"]
-      interval: 30s
+      interval: 1m
       retries: 10
     network_mode: "service:vpn"
     depends_on:
@@ -309,16 +309,13 @@ services:
       - PORT_PERSIST=1
       - PORT_SCRIPT=/pia-shared/portupdate-qbittorrent.sh
       - FIREWALL=0
+      - ACTIVE_HEALTHCHECKS=1
+      - RECONNECT=1
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
       - net.ipv6.conf.default.disable_ipv6=1
       - net.ipv6.conf.all.disable_ipv6=1
       - net.ipv6.conf.lo.disable_ipv6=1
-    healthcheck:
-      test: ping -c 1 www.google.com || exit 1
-      interval: 30s
-      timeout: 10s
-      retries: 3
     restart: always
   unpackerr:
     image: ghcr.io/unpackerr/unpackerr:latest
@@ -335,6 +332,36 @@ services:
       - UN_RADARR_0_API_KEY=${RADARR_API_KEY}
     security_opt:
       - no-new-privileges:true
+  cleanuperr:
+    image: ghcr.io/flmorg/cleanuperr:latest
+    container_name: cleanuperr
+    restart: always
+    volumes:
+      - ${CONFIG_ROOT:-.}/cleanuperr/logs:/var/logs
+      - ${CONFIG_ROOT:-.}/cleanuperr/ignored.txt:/usr/ignored.txt
+      - ${CONFIG_ROOT:-.}/cleanuperr/blacklist.json:/usr/blacklist.json
+    environment:
+      - TZ=${TIMEZONE}
+      - QUEUECLEANER__ENABLED=true
+      - QUEUECLEANER__IMPORT_FAILED_MAX_STRIKES=3
+      - QUEUECLEANER__STALLED_MAX_STRIKES=3
+      - QUEUECLEANER__DOWNLOADING_METADATA_MAX_STRIKES=3
+      - QUEUECLEANER__STALLED_RESET_STRIKES_ON_PROGRESS=true
+      - TRIGGERS__QUEUECLEANER=0 0 0/1 * * ?
+      - CONTENTBLOCKER__ENABLED=true
+      - CONTENTBLOCKER__IGNORED_DOWNLOADS_PATH=/usr/ignored.txt
+      - TRIGGERS__CONTENTBLOCKER=0 0 0/1 * * ?
+      - DOWNLOAD_CLIENT=qBittorrent
+      - QBITTORRENT__URL=http://vpn:8080
+      - QBITTORRENT__PASSWORD=${QBITTORRENT_PASSWORD}
+      - SONARR__ENABLED=true
+      - SONARR__BLOCK__PATH=/usr/blacklist.json
+      - SONARR__INSTANCES__0__URL=http://sonarr:8989/sonarr
+      - SONARR__INSTANCES__0__APIKEY=${SONARR_API_KEY}
+      - RADARR__ENABLED=true
+      - RADARR__BLOCK__PATH=/usr/blacklist.json
+      - RADARR__INSTANCES__0__URL=http://radarr:7878/radarr
+      - RADARR__INSTANCES__0__APIKEY=${RADARR_API_KEY}
   sabnzbd:
     image: lscr.io/linuxserver/sabnzbd:latest
     container_name: sabnzbd
@@ -380,7 +407,7 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://127.0.0.1:8096/jellyfin/health"]
-      interval: 30s
+      interval: 1m
       retries: 10
     labels:
       - traefik.enable=true
