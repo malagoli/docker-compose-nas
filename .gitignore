@@ -20,6 +20,9 @@ docker-compose.override.yml
 /adguardhome/work
 /sabnzbd
 /calibre-web
-/cleanuparr/*
-!/cleanuparr/blacklist.json
-!/cleanuparr/logs/.gitkeep
+/cleanuperr/*
+!/cleanuperr/blacklist.json
+!/cleanuperr/logs/.gitkeep
+/cleanuperr/*
+!/cleanuperr/blacklist.json
+/jeedom
