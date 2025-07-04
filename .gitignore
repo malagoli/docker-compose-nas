@@ -26,3 +26,4 @@ docker-compose.override.yml
 /cleanuperr/*
 !/cleanuperr/blacklist.json
 /jeedom
+/traefik
