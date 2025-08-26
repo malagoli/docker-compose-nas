@@ -12,6 +12,7 @@ services:
       - ${IMMICH_UPLOAD_LOCATION}:/usr/src/app/upload
       - /etc/localtime:/etc/localtime:ro
       - ${CONFIG_ROOT:-.}/immich/healthcheck:/healthcheck
+      - /mnt/media/media/photo_takeout:/takeout
     depends_on:
       - immich-redis
       - immich-database
