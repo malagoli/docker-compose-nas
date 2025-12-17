@@ -29,23 +29,23 @@ services:
     profiles:
       - tandoor
 
-  tandoor-backup:
-    image: ghcr.io/adrienpoupa/rclone-backup:latest
-    container_name: tandoor-backup
-    restart: always
-    env_file:
-      - ${CONFIG_ROOT:-.}/tandoor/backup.env
-    environment:
-      - BACKUP_FOLDER_NAME=mediafiles
-      - BACKUP_FOLDER_PATH=/data/mediafiles
-      - DB_TYPE=sqlite
-      - SQLITE_DATABASE=/database/recipes.db
-    volumes:
-      - ${CONFIG_ROOT:-.}/tandoor/database:/database
-      - ${CONFIG_ROOT:-.}/tandoor/mediafiles:/data/mediafiles
-      - ${CONFIG_ROOT:-.}/tandoor/backup:/config
-    profiles:
-      - tandoor
+  #tandoor-backup:
+  #  image: ghcr.io/adrienpoupa/rclone-backup:latest
+  #  container_name: tandoor-backup
+  #  restart: always
+  #  env_file:
+  #    - ${CONFIG_ROOT:-.}/tandoor/backup.env
+  #  environment:
+  #    - BACKUP_FOLDER_NAME=mediafiles
+  #    - BACKUP_FOLDER_PATH=/data/mediafiles
+  #    - DB_TYPE=sqlite
+  #    - SQLITE_DATABASE=/database/recipes.db
+  #  volumes:
+  #    - ${CONFIG_ROOT:-.}/tandoor/database:/database
+  #    - ${CONFIG_ROOT:-.}/tandoor/mediafiles:/data/mediafiles
+  #    - ${CONFIG_ROOT:-.}/tandoor/backup:/config
+  #  profiles:
+  #    - tandoor
 
 volumes:
   tandoor-staticfiles:
