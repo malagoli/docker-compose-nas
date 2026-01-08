@@ -11,7 +11,11 @@
   <EnableUPnP>false</EnableUPnP>
   <EnableIPv4>true</EnableIPv4>
   <EnableIPv6>false</EnableIPv6>
+<<<<<<< HEAD
   <EnableRemoteAccess>true</EnableRemoteAccess>
+=======
+  <EnableRemoteAccess>false</EnableRemoteAccess>
+>>>>>>> AdrienPoupa-master
   <LocalNetworkSubnets />
   <LocalNetworkAddresses />
   <KnownProxies />

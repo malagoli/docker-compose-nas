@@ -583,8 +583,17 @@ services:
     volumes:
       - ./jeedom/db:/var/lib/mysql
       - ./jeedom/www:/var/www/html
+    #privileged: true
     tmpfs:
       - /tmp/jeedom      
+    #network_mode: bridge
+    labels:
+      - homepage.group=Media
+      - homepage.name=jeedom
+      - homepage.href=http://nas.malago.li:8085/
+      - homepage.description=Jeedom
+      - homepage.weight=4
+      - homepage.widget.type=jeedom
     healthcheck:
         test: ["CMD", "curl", "-fs", "-S", "--max-time", "2", "http://localhost:80"]
         interval: 30s
@@ -598,7 +607,6 @@ services:
        - "tunnel"
        - "--no-autoupdate"
        - "run"
-
 networks:
   default:
     name: docker-compose-nas
