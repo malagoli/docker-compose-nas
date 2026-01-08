@@ -239,6 +239,36 @@ services:
       - traefik.http.services.flaresolverr.loadbalancer.server.port=8191
     profiles:
       - flaresolverr
+  autobrr:
+    container_name: autobrr
+    image: ghcr.io/autobrr/autobrr:latest
+    restart: always
+    environment:
+      - TZ=${TIMEZONE}
+      - AUTOBRR__BASE_URL=/autobrr/
+    user: ${USER_ID}:${GROUP_ID}
+    volumes:
+      - ${CONFIG_ROOT:-.}/autobrr:/config
+    labels:
+      - traefik.enable=true
+      - traefik.http.middlewares.autobrr-strip.stripprefix.prefixes=/autobrr
+      - traefik.http.middlewares.autobrr-strip.stripprefix.forceSlash=true
+      - traefik.http.routers.autobrr.rule=(Host(`${HOSTNAME}`) && PathPrefix(`/autobrr`))
+      - traefik.http.routers.autobrr.tls=true
+      - traefik.http.routers.autobrr.tls.certresolver=myresolver
+      - traefik.http.services.autobrr.loadbalancer.server.port=7474
+      - traefik.http.routers.autobrr.middlewares=autobrr-strip
+      - homepage.group=Download
+      - homepage.name=Autobrr
+      - homepage.icon=autobrr.png
+      - homepage.href=/autobrr
+      - homepage.description=Torrent download automation
+      - homepage.weight=7
+      - homepage.widget.type=autobrr
+      - homepage.widget.url=http://autobrr:7474
+      - homepage.widget.key=${AUTOBRR_API_KEY}
+    profiles:
+      - autobrr
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:libtorrentv1
     container_name: qbittorrent
@@ -315,6 +345,17 @@ services:
       - net.ipv6.conf.all.disable_ipv6=1
       - net.ipv6.conf.lo.disable_ipv6=1
     restart: always
+  cross-seed:
+    image: ghcr.io/cross-seed/cross-seed:latest
+    container_name: cross-seed
+    user: ${USER_ID}:${GROUP_ID}
+    volumes:
+      - ${CONFIG_ROOT:-.}/cross-seed:/config
+      - ${DOWNLOAD_ROOT}:/data/torrents
+    command: daemon
+    restart: always
+    profiles:
+      - cross-seed
   unpackerr:
     image: ghcr.io/unpackerr/unpackerr:latest
     container_name: unpackerr
@@ -334,6 +375,12 @@ services:
     image: ghcr.io/cleanuparr/cleanuparr:latest
     container_name: cleanuparr
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11011/cleanuparr/health"]
+      interval: 1m
+      timeout: 10s
+      start_period: 30s
+      retries: 10
     volumes:
       - ${CONFIG_ROOT:-.}/cleanuparr/logs:/var/logs
       - ${CONFIG_ROOT:-.}/cleanuparr/ignored.txt:/usr/ignored.txt
@@ -343,6 +390,53 @@ services:
       - TZ=${TIMEZONE}
       - PUID=${USER_ID}
       - PGID=${GROUP_ID}
+      - BASE_PATH=/cleanuparr
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.cleanuparr.rule=(Host(`${HOSTNAME}`) && PathPrefix(`/cleanuparr`))
+      - traefik.http.routers.cleanuparr.tls=true
+      - traefik.http.routers.cleanuparr.tls.certresolver=myresolver
+      - traefik.http.services.cleanuparr.loadbalancer.server.port=11011
+      - homepage.group=Download
+      - homepage.name=Cleanuparr
+      - homepage.icon=cleanuperr.png
+      - homepage.href=/cleanuparr
+      - homepage.description=Cleanuparr
+      - homepage.weight=5
+    profiles:
+      - cleanuparr
+  huntarr:
+    image: ghcr.io/plexguide/huntarr:latest
+    container_name: huntarr
+    restart: always
+    environment:
+      - PUID=${USER_ID}
+      - PGID=${GROUP_ID}
+      - TZ=${TIMEZONE}
+      # Not using Huntarr's base URL feature until this is merged: https://github.com/plexguide/Huntarr.io/pull/760
+      # - BASE_URL=/huntarr
+    volumes:
+      - ${CONFIG_ROOT:-.}/huntarr:/config
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.huntarr.rule=(Host(`${HOSTNAME}`) && PathPrefix(`/huntarr`))
+      - traefik.http.routers.huntarr.tls=true
+      - traefik.http.routers.huntarr.tls.certresolver=myresolver
+      - traefik.http.services.huntarr.loadbalancer.server.port=9705
+      - traefik.http.middlewares.huntarr-slash.redirectregex.regex=^https?://([^/]+)/huntarr$
+      - traefik.http.middlewares.huntarr-slash.redirectregex.replacement=https://$${1}/huntarr/
+      - traefik.http.middlewares.huntarr-slash.redirectregex.permanent=true
+      - traefik.http.middlewares.huntarr-strip.stripprefix.prefixes=/huntarr
+      - traefik.http.middlewares.huntarr-xfp.headers.customrequestheaders.X-Forwarded-Prefix=/huntarr
+      - traefik.http.routers.huntarr.middlewares=huntarr-slash,huntarr-strip,huntarr-xfp
+      - homepage.group=Download
+      - homepage.name=Huntarr
+      - homepage.icon=huntarr.png
+      - homepage.href=/huntarr
+      - homepage.description=Huntarr
+      - homepage.weight=6
+    profiles:
+      - huntarr
   sabnzbd:
     image: lscr.io/linuxserver/sabnzbd:latest
     container_name: sabnzbd
@@ -440,42 +534,6 @@ services:
       - homepage.widget.password=${CALIBRE_PASSWORD}
     profiles:
       - calibre-web
-  decluttarr:
-    image: ghcr.io/manimatter/decluttarr:latest
-    container_name: decluttarr
-    restart: always
-    environment:
-      - PUID=${USER_ID}
-      - PGID=${GROUP_ID}
-      - TZ=${TIMEZONE}
-      - RADARR_URL=http://radarr:7878/radarr
-      - RADARR_KEY=${RADARR_API_KEY}
-      - SONARR_URL=http://sonarr:8989/sonarr
-      - SONARR_KEY=${SONARR_API_KEY}
-      - LIDARR_URL=http://lidarr:8686/lidarr
-      - LIDARR_KEY=${LIDARR_API_KEY}
-      - QBITTORRENT_URL=http://qbittorrent:8080
-      - QBITTORRENT_USERNAME=${QBITTORRENT_USERNAME}
-      - QBITTORRENT_PASSWORD=${QBITTORRENT_PASSWORD}
-      - LOG_LEVEL=${DECLUTTARR_LOG_LEVEL:-INFO}
-      - TEST_RUN=${DECLUTTARR_TEST_RUN:-False}
-      - REMOVE_TIMER=${DECLUTTARR_REMOVE_TIMER:-10}
-      - REMOVE_FAILED=${DECLUTTARR_REMOVE_FAILED:-True}
-      - REMOVE_FAILED_IMPORTS=${DECLUTTARR_REMOVE_FAILED_IMPORTS:-True}
-      - REMOVE_METADATA_MISSING=${DECLUTTARR_REMOVE_METADATA_MISSING:-True}
-      - REMOVE_MISSING_FILES=${DECLUTTARR_REMOVE_MISSING_FILES:-True}
-      - REMOVE_ORPHANS=${DECLUTTARR_REMOVE_ORPHANS:-True}
-      - REMOVE_SLOW=${DECLUTTARR_REMOVE_SLOW:-True}
-      - REMOVE_STALLED=${DECLUTTARR_REMOVE_STALLED:-True}
-      - REMOVE_UNMONITORED=${DECLUTTARR_REMOVE_UNMONITORED:-True}
-      - RUN_PERIODIC_RESCANS=${DECLUTTARR_RUN_PERIODIC_RESCANS:-}
-      - PERMITTED_ATTEMPTS=${DECLUTTARR_PERMITTED_ATTEMPTS:-3}
-      - NO_STALLED_REMOVAL_QBIT_TAG=${DECLUTTARR_REMOVAL_QBIT_TAG:-"stalled"}
-      - MIN_DOWNLOAD_SPEED=${DECLUTTARR_MIN_DOWNLOAD_SPEED:-100}
-      - FAILED_IMPORT_MESSAGE_PATTERNS=${DECLUTTARR_FAILED_IMPORT_MESSAGE_PATTERNS:-}
-      - IGNORED_DOWNLOAD_CLIENTS=${DECLUTTARR_IGNORED_DOWNLOAD_CLIENTS:-}
-    profiles:
-      - decluttarr
   homepage:
     image: ghcr.io/gethomepage/homepage:latest
     container_name: homepage
