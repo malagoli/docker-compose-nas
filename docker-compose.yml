@@ -23,14 +23,12 @@ services:
       - --certificatesresolvers.myresolver.acme.caserver=${LETS_ENCRYPT_CA_SERVER:-https://acme-v02.api.letsencrypt.org/directory}
       - --certificatesresolvers.myresolver.acme.email=${LETS_ENCRYPT_EMAIL}
       - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
-      - --providers.file.directory=/etc/traefik/dynamic_config
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ${CONFIG_ROOT:-.}/letsencrypt:/letsencrypt
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./traefik/dynamic_config:/etc/traefik/dynamic_config" # Mount dynami
     extra_hosts:
       - host.docker.internal:172.17.0.1
     healthcheck:
