@@ -412,7 +412,7 @@ services:
       - PGID=${GROUP_ID}
       - TZ=${TIMEZONE}
       # Not using Huntarr's base URL feature until this is merged: https://github.com/plexguide/Huntarr.io/pull/760
-      # - BASE_URL=/huntarr
+      - BASE_URL=/huntarr
     volumes:
       - ${CONFIG_ROOT:-.}/huntarr:/config
     labels:
@@ -435,6 +435,8 @@ services:
       - homepage.weight=6
     profiles:
       - huntarr
+    ports:
+      - "9705:9705"
   sabnzbd:
     image: lscr.io/linuxserver/sabnzbd:latest
     container_name: sabnzbd
@@ -574,37 +576,7 @@ services:
       - AUTOHEAL_CONTAINER_LABEL=all
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-  jeedom:
-    image: jeedom/jeedom:latest
-    container_name: jeedom
-    restart: always
-    volumes:
-      - ./jeedom/db:/var/lib/mysql
-      - ./jeedom/www:/var/www/html
-    #privileged: true
-    tmpfs:
-      - /tmp/jeedom      
-    #network_mode: bridge
-    labels:
-      - homepage.group=Media
-      - homepage.name=jeedom
-      - homepage.href=http://nas.malago.li:8085/
-      - homepage.description=Jeedom
-      - homepage.weight=4
-      - homepage.widget.type=jeedom
-    healthcheck:
-        test: ["CMD", "curl", "-fs", "-S", "--max-time", "2", "http://localhost:80"]
-        interval: 30s
-        timeout: 10s
-        retries: 5
-  jeedom_cloudflare:
-     image: cloudflare/cloudflared:latest
-     restart: always
-     env_file: ".env"
-     command:
-       - "tunnel"
-       - "--no-autoupdate"
-       - "run"
+  
 networks:
   default:
     name: docker-compose-nas
