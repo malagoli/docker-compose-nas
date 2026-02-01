@@ -435,8 +435,6 @@ services:
       - homepage.weight=6
     profiles:
       - huntarr
-    ports:
-      - "9705:9705"
   sabnzbd:
     image: lscr.io/linuxserver/sabnzbd:latest
     container_name: sabnzbd
@@ -576,7 +574,6 @@ services:
       - AUTOHEAL_CONTAINER_LABEL=all
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-  
 networks:
   default:
     name: docker-compose-nas
